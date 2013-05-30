@@ -1,0 +1,2 @@
+distribute==0.6.34
+suds-jurko==0.4.1.jurko.4
