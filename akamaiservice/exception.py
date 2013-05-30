@@ -1,0 +1,2 @@
+class AkamaiServiceException(Exception):
+    pass
