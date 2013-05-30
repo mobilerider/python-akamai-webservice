@@ -1,4 +1,4 @@
 python-akamai-webservice
 ========================
 
-Python bindings for Akamai's web service
+Python client for Akamai's web services
