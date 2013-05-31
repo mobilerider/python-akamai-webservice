@@ -1,11 +1,11 @@
 import sys
 import getopt
 from datetime import datetime
+from akamaiservice.connection import Connection
 
-from AkamaiProvider import AkamaiProvider
 
 def print_help():
-    print("Usage : <report> [-c <codes> | --codes=<codes> ]")
+    print("Usage : <service> <method> [-c <codes> | --codes=<codes> ]")
     print("Gets report data from Akamai web services.")
     print("Report types: live | vod | storage | total_storage, ")
     print("   -c, --codes         list of CP codes separated by comma")
@@ -19,35 +19,35 @@ def print_help():
 
 if __name__ == "__main__":
     try:
-        if len(sys.argv) == 1:
+        if len(sys.argv) <= 3:
             raise Exception('Missing required parameters')
 
-        opts, args = getopt.getopt(sys.argv[1:], "hc:u:p:s:e:", ["help,codes=,username=, password=, start=,end="])
+        opts, args = getopt.getopt(sys.argv[3:], "hc:u:p:s:e:", ["help,codes=,username=, password=, start=,end="])
 
-        report = args[0]
-        report_args = []
-        report_kwargs = {}
+        service_args = []
+        service_kwargs = {'service_name': sys.argv[1], 'service_method': sys.argv[2]}
 
         for opt, arg in opts:
             if opt in ('-h', '--help'):
                 print_help()
                 sys.exit()
             elif opt in ('-c', '--codes'):
-                report_args.append(arg.split(','))
+                service_args.append(arg.split(','))
             elif opt in ('-u', '--username'):
-                report_kwargs['username'] = arg
+                service_kwargs['username'] = arg
             elif opt in ('-p', '--password'):
-                report_kwargs['password'] = arg
+                service_kwargs['password'] = arg
             elif opt in ('-s', '--start'):
-                report_kwargs['start_date'] = datetime.strptime(arg, '%m/%d/%Y-%H:%M:%S')
+                service_args.append(datetime.strptime(arg, '%m/%d/%Y-%H:%M:%S'))
             elif opt in ('-e', '--end'):
-                report_kwargs['end_date'] = datetime.strptime(arg, '%m/%d/%Y-%H:%M:%S')
+                service_args.append(datetime.strptime(arg, '%m/%d/%Y-%H:%M:%S'))
             else:
                 raise Exception('Argument unknown')
 
-        provider = AkamaiProvider(*report_args, **report_kwargs)
+        connection = Connection(service_kwargs.get('username'), service_kwargs.get('password'))
+        service = connection.get_service(service_kwargs['service_name'])
 
-        print provider.get_report(report)
+        print getattr(service, service_kwargs['service_method'])(*service_args)
 
     except Exception as ex:
         print("Error: " + ex.msg if hasattr(ex, 'msg') else ex.message)
