@@ -13,16 +13,19 @@ def print_help():
     print("   -p, --password      Akamai Luna Control Center password")
     print("   -s, --start         start date for report filtering, by default -1 day, format: mm/dd/yyyy-hh:mm")
     print("   -e, --end           end date for report filtering, by default now, format: mm/dd/yyyy-hh:mm")
+    print("   -f, --format        media format for filtering, supported: all, flash, real, quickTime, windowsMedia")
     print("   -h, --help          display this help and exit")
     print("   -v                  verbose mode, output debug information")
     print("       --version       output version information and exit")
+
 
 if __name__ == "__main__":
     try:
         if len(sys.argv) <= 3:
             raise Exception('Missing required parameters')
 
-        opts, args = getopt.getopt(sys.argv[3:], "hc:u:p:s:e:", ["help,codes=,username=, password=, start=,end="])
+        opts, args = getopt.getopt(sys.argv[3:], "hc:u:p:s:e:f:",
+                                   ["help,codes=,username=,password=,start=,end=,format="])
 
         service_args = []
         service_kwargs = {'service_name': sys.argv[1], 'service_method': sys.argv[2]}
@@ -41,6 +44,13 @@ if __name__ == "__main__":
                 service_args.append(datetime.strptime(arg, '%m/%d/%Y-%H:%M:%S'))
             elif opt in ('-e', '--end'):
                 service_args.append(datetime.strptime(arg, '%m/%d/%Y-%H:%M:%S'))
+                service_args.append('GMT')  #Default time zone
+                service_args.append(None)  #Null for column array, not supported yet
+            elif opt in ('-f', '--format'):
+                f = service_kwargs.get('filter', {})
+                f['format'] = arg
+                service_kwargs['filter'] = f
+                service_args.append(f)
             else:
                 raise Exception('Argument unknown')
 
