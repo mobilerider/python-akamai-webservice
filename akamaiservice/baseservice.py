@@ -1,5 +1,3 @@
-from suds.client import Client
-
 from .exception import AkamaiServiceException
 
 
