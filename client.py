@@ -57,7 +57,7 @@ if __name__ == "__main__":
         connection = Connection(service_kwargs.get('username'), service_kwargs.get('password'))
         service = connection.get_service(service_kwargs['service_name'])
 
-        print getattr(service, service_kwargs['service_method'])(*service_args)
+        print service.invoke_method(service_kwargs['service_method'], *service_args)
 
     except Exception as ex:
         print("Error: " + ex.msg if hasattr(ex, 'msg') else ex.message)
