@@ -2,7 +2,6 @@ from .exception import AkamaiServiceException
 from cStringIO import StringIO
 from csv import reader as csv_reader
 
-
 class BaseService(object):
     client = None
 
@@ -21,6 +20,12 @@ class BaseService(object):
         return self.parse(getattr(self, name)(*args))
 
     def parse(self, data):
+        """
+        Parses csv data into a list of dictionaries where every csv row
+        represents an item on the list.
+        @param data:
+        @return:
+        """
         mem_file = StringIO(data)
         reader = csv_reader(mem_file, lineterminator='\n', strict=True)
 
@@ -34,9 +39,12 @@ class BaseService(object):
             elif row[0].startswith('#') and len(row) <= 1:
                 continue
 
-            item = {}
-            for count, k in enumerate(keys):
-                item[k] = row[count]
+            if keys:
+                item = {}
+                for count, k in enumerate(keys):
+                    item[k] = row[count]
+            else:
+                item = row
 
             result.append(item)
 
