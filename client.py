@@ -24,8 +24,8 @@ if __name__ == "__main__":
         if len(sys.argv) <= 3:
             raise Exception('Missing required parameters')
 
-        opts, args = getopt.getopt(sys.argv[3:], "hc:u:p:s:e:f:",
-                                   ["help,codes=,username=,password=,start=,end=,format="])
+        opts, args = getopt.getopt(sys.argv[3:], "hc:u:p:s:e:f:m:",
+                                   ["help,codes=,username=,password=,start=,end=,format=,media="])
 
         service_args = []
         service_kwargs = {'service_name': sys.argv[1], 'service_method': sys.argv[2]}
@@ -51,13 +51,15 @@ if __name__ == "__main__":
                 f['format'] = arg
                 service_kwargs['filter'] = f
                 service_args.append(f)
+            elif opt in ('-m', '--media'):
+                service_args.append(arg.split(','))
             else:
                 raise Exception('Argument unknown')
 
         connection = Connection(service_kwargs.get('username'), service_kwargs.get('password'))
-        service = connection.get_service(service_kwargs['service_name'])
+        service = connection.get_service(service_kwargs['service_name'], True)
 
-        print service.invoke_method(service_kwargs['service_method'], *service_args)
+        print service.invoke_method(service_kwargs['service_method'], *service_args, all_cp_codes=True)
 
     except Exception as ex:
         print("Error: " + ex.msg if hasattr(ex, 'msg') else ex.message)
