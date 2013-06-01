@@ -9,6 +9,7 @@ class BaseService(object):
     def __init__(self, client, load_cp_codes=False):
         self.client = client
         self.codes = None
+        self.invalid_codes = None
 
         if load_cp_codes:
             self.get_cp_codes()
@@ -30,10 +31,14 @@ class BaseService(object):
         @return: list
         """
         if self.codes and not force_refresh:
-            return self.codes
+            if self.invalid_codes:
+                return [x for x in self.codes if x not in self.invalid_codes]
+            else:
+                return self.codes
 
         data = self.invoke_method('getCPCodes')
         self.codes = [x.cpcode for x in data]
+        self.invalid_codes = []
 
         return data
 
@@ -41,16 +46,36 @@ class BaseService(object):
         """
         Executes akamai service method given by name and returns a result.
         It parses result data if is of string type
-        Use all_cp_codes=True to test for all codes allowed
+        Use all_cp_codes=True to test for all codes allowed, if you use
+        this option you may pass the cp codes param as empty list or None
+        Use strict to force exception raising
         @param name: string
         @param args: list
         @param kwargs: dict
         @return: mixed
         """
-        if kwargs.get('all_cp_codes'):
-            args = (self.get_cp_codes(),) + args
+        strict = kwargs.get('strict')
+        all_cp_codes = kwargs.get('all_cp_codes')
 
-        data = getattr(self, name)(*args)
+        if all_cp_codes:
+            args = list(args)
+            args[0] = self.get_cp_codes()
+
+        try:
+            data = getattr(self, name)(*args)
+        except Exception as ex:
+            if not strict:
+                if 'The following cpcodes are invalid for you' in ex.message:
+                    self.invalid_codes = [int(x.strip()) for x in ex.message[:-2].split(':')[-1].split(',')]
+                else:
+                    raise ex
+
+                # Protects against infinite loop
+                kwargs['strict'] = False
+                # Call itself again
+                return self.invoke_method(name, *args, **kwargs)
+            else:
+                raise ex
 
         return self.parse(data) if isinstance(data, basestring) else data
 
