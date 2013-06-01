@@ -21,19 +21,35 @@ class BaseService(object):
                        (name, self.__name__))
             raise AkamaiServiceException(message)
 
-    def get_cp_codes(self):
+    def get_cp_codes(self, force_refresh=False):
         """
         Retrieves a list of CPCodeInfo instances from akamai current service.
-        CPCodeInfo format: {cpcode = 123, description = "desc", service = "Service::Method"}
+        CPCodeInfo format: {cpcode = 123 description = "desc" service = "Service::Method"}
         The numeric cp codes are stored in this service instance
+        @param force_refresh: bool Forces retrieving of codes from remote service
         @return: list
         """
+        if self.codes and not force_refresh:
+            return self.codes
+
         data = self.invoke_method('getCPCodes')
         self.codes = [x.cpcode for x in data]
 
         return data
 
-    def invoke_method(self, name, *args):
+    def invoke_method(self, name, *args, **kwargs):
+        """
+        Executes akamai service method given by name and returns a result.
+        It parses result data if is of string type
+        Use all_cp_codes=True to test for all codes allowed
+        @param name: string
+        @param args: list
+        @param kwargs: dict
+        @return: mixed
+        """
+        if kwargs.get('all_cp_codes'):
+            args = (self.get_cp_codes(),) + args
+
         data = getattr(self, name)(*args)
 
         return self.parse(data) if isinstance(data, basestring) else data
