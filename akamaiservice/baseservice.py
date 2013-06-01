@@ -95,6 +95,7 @@ class BaseService(object):
         for row in reader:
             if not keys and row[0].startswith('#') and len(row) > 1:
                 keys = row
+                keys[0] = keys[0].replace('#', '').strip()
                 continue
             elif row[0].startswith('#') and len(row) <= 1:
                 continue
