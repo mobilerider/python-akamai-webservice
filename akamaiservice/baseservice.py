@@ -1,6 +1,9 @@
-from .exception import AkamaiServiceException
 from cStringIO import StringIO
 from csv import reader as csv_reader
+
+from suds import WebFault
+
+from .exception import AkamaiServiceException
 
 
 class BaseService(object):
@@ -18,8 +21,7 @@ class BaseService(object):
         try:
             return getattr(self.client.service, name)
         except KeyError:
-            message = ('%s does not exist in service %s' %
-                       (name, self.__name__))
+            message = ('%s does not exist in service %s' % (name, self.__name__))
             raise AkamaiServiceException(message)
 
     def get_cp_codes(self, force_refresh=False):
@@ -63,7 +65,7 @@ class BaseService(object):
 
         try:
             data = getattr(self, name)(*args)
-        except Exception as ex:
+        except WebFault as ex:
             if not strict:
                 if 'The following cpcodes are invalid for you' in ex.message:
                     self.invalid_codes = [int(x.strip()) for x in ex.message[:-2].split(':')[-1].split(',')]
