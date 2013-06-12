@@ -89,7 +89,11 @@ class BaseService(object):
         @return: list
         """
         mem_file = StringIO(data)
-        reader = csv_reader(mem_file, lineterminator='\n', strict=True)
+        mem_content = mem_file.getvalue()
+        mem_file.close()
+        mem_file = StringIO(mem_content.replace('\0', ''))
+
+        reader = csv_reader(mem_file)
 
         result = []
         keys = None
